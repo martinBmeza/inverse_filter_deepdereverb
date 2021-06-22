@@ -1,0 +1,12 @@
+# Project structure ignored
+data/
+
+# Python
+__pycache__
+*.npy
+
+# Jupyter Notebook
+*.ipynb_checkpoints
+
+# Vim
+*.swp
