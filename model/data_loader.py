@@ -1,12 +1,12 @@
-"""Alimentar con datos al bucle de entrenamiento"""
-import keras
+"""mentar con datos al bucle de entrenamiento"""
+from tensorflow.keras.utils import Sequence
 import numpy as np
 import os
 import glob
 import random
 import librosa
 
-class DataGenerator(keras.utils.Sequence):
+class DataGenerator(Sequence):
     'Generates data for Keras'
     def __init__(self, list_IDs, path='', batch_size=8, dim=(32767), n_channels=1,  shuffle=True):
         'Initialization'
@@ -44,31 +44,41 @@ class DataGenerator(keras.utils.Sequence):
     def __data_generation(self, list_IDs_temp):
         'Generates data containing batch_size samples'
         # Initialization
-        input_A = np.empty((self.batch_size, 257, 5))
-        input_B = np.empty((self.batch_size, 257, 9))
-        output = np.empty((self.batch_size, 257, 1))
-
+        input_A = np.empty((self.batch_size, 256, 5, 1))
+        input_B = np.empty((self.batch_size, 256, 9, 1))
+        output = np.empty((self.batch_size, 256, 1))
+        saved_array = np.empty((256,15))
+        LM = 5
+        Pd = 9
         # Generate data
         for i, ID in enumerate(list_IDs_temp):
+            saved_array = np.load(self.path + str(ID) + '.npy')
+            input_A[i] = saved_array[:, :LM].reshape(256, LM,1)
+            input_B[i] = saved_array[:,LM:LM+Pd].reshape(256, Pd, 1)
+            output[i] = saved_array[:, -1:].reshape(256,1)
 
-            input_A, input_B, output = np.load(self.path + str(ID) + '.npy', allow_pickle = True)
-            
-        return [input_A,input_B], output
+        return [input_A, input_B], output
 
 
 def build_generators(params):
     """
-    Crea instancias de la clase DataGenerator (para entrenamiento y valdiacion) a partir de un diccionario donde se determinan los parametros
+    Crea instancias de la clase DataGenerator (para entrenamiento y valdiacion) 
+    a partir de un diccionario donde se determinan los parametros
     del generador de datos, y el path principal.
     PARAMETROS:
         -MAIN_PATH (str) path principal de la carpeta de trabajo
-        -params (dict) diccionario con los campos 'dim'(int), 'batch_size'(int), 'shuffle'(bool) para configurar el generador de datos
-        -subpath (str) path de la carpeta dentro de data/ de donde tomar los datos. Por defecto esta asignada a 'data_ready' que es donde se encuentran
-        los datos procesados. Puede ser util cambiarla a la carpeta data_dummy para trabajar con los datos dummy en ocasiones de debuggeo
+        -params (dict) diccionario con los campos 'dim'(int), 'batch_size'(int), 
+            'shuffle'(bool) para configurar el generador de datos
+        -subpath (str) path de la carpeta dentro de data/ de donde tomar los datos. 
+            Por defecto esta asignada a 'data_ready' que es donde se encuentran
+            los datos procesados. Puede ser util cambiarla a la carpeta data_dummy 
+            para trabajar con los datos dummy en ocasiones de debuggeo
     SALIDA:
-        -training_generator (DataGenerator) instancia de clase que contiene los datos para pasarse a una instancia de entrenamiento y proveer
+        -training_generator (DataGenerator) instancia de clase que contiene los 
+            datos para pasarse a una instancia de entrenamiento y proveer
             los datos de entrenamiento al modelo
-        -validation_generator (DataGenerator) instancia de clase que contiene los datos para pasarse a una instancia de entrenamiento y proveer
+        -validation_generator (DataGenerator) instancia de clase que contiene 
+            los datos para pasarse a una instancia de entrenamiento y proveer
             los datos de validacion al modelo
         """
 
@@ -89,3 +99,4 @@ def build_generators(params):
     print('Cantidad de datos para entrenamiento:', len(partition['train']))
     print('Cantidad de datos para validacion:', len(partition['validation']))
     return training_generator, validation_generator
+
