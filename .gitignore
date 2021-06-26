@@ -10,3 +10,6 @@ __pycache__
 
 # Vim
 *.swp
+
+#Pesos guardados
+*.hdf5
